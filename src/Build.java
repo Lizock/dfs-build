@@ -1,6 +1,8 @@
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 
@@ -14,6 +16,27 @@ public class Build {
    * @param k the maximum word length (exclusive)
    */
   public static void printShortWords(Vertex<String> vertex, int k) {
+    if (vertex == null || k <= 0) return;
+    
+    Set<Vertex<String>> visited = new HashSet<>();
+    Queue<Vertex<String>> queue = new LinkedList<>();
+    
+    queue.add(vertex);
+    visited.add(vertex);
+    
+    while (!queue.isEmpty()){
+      Vertex<String> current = queue.poll();
+      if (current.data.length() < k){
+        System.out.println(current.data);
+      }
+
+      for (Vertex<String> neighbor : current.neighbors){
+        if (!visited.contains(neighbor)){
+          visited.add(neighbor);
+          queue.add(neighbor);
+        }
+      }
+    }
   }
 
   /**
@@ -23,7 +46,24 @@ public class Build {
    * @return the longest reachable word, or an empty string if the vertex is null
    */
   public static String longestWord(Vertex<String> vertex) {
-    return "";
+    if (vertex == null) return "";
+    Set<Vertex<String>> visited = new HashSet<>();
+    return LongestWordHelper(vertex, visited);
+  }
+
+  private static String LongestWordHelper(Vertex<String> vertex, Set<Vertex<String>> visited) {
+    visited.add(vertex);
+    String longest = vertex.data;
+
+    for (Vertex<String> neighbor : vertex.neighbors){
+      if (!visited.contains(neighbor)){
+        String candidate = LongestWordHelper(neighbor, visited);
+        if (candidate.length() > longest.length()){
+          longest = candidate;
+        }
+      }
+    }
+    return longest;
   }
 
   /**
@@ -34,6 +74,26 @@ public class Build {
    * @param <T> the type of values stored in the vertices
    */
   public static <T> void printSelfLoopers(Vertex<T> vertex) {
+    if (vertex == null) return;
+
+    Set<Vertex<T>> visited = new HashSet<>();
+    Queue<Vertex<T>> queue = new LinkedList<>();
+    
+    queue.add(vertex);
+    visited.add(vertex);
+    
+    while (!queue.isEmpty()) {
+      Vertex<T> current = queue.poll();
+      if (current.neighbors.contains(current)){
+        System.out.println(current.data);
+      }
+      for (Vertex<T> neighbor : current.neighbors){
+        if (!visited.contains(neighbor)) {
+          visited.add(neighbor);
+          queue.add(neighbor);
+        }
+      }
+    }
   }
 
   /**
@@ -45,6 +105,26 @@ public class Build {
    * @return true if the destination is reachable from the start, false otherwise
    */
   public static boolean canReach(Airport start, Airport destination) {
+    if (start == null || destination == null) return false;
+    if (start == destination) return true;
+
+    Set<Airport> visited = new HashSet<>();
+    Queue<Airport> queue = new LinkedList<>();
+    
+    queue.add(start);
+    visited.add(start);
+    
+    while (!queue.isEmpty()){
+      Airport current = queue.poll();
+      if (current == destination) return true;
+      
+      for (Airport next : current.getOutboundFlights()){
+        if (!visited.contains(next)) {
+          visited.add(next);
+          queue.add(next);
+        }
+      }
+    }
     return false;
   }
 
@@ -58,6 +138,20 @@ public class Build {
    * @return a set of values that cannot be reached from the starting value
    */
   public static <T> Set<T> unreachable(Map<T, List<T>> graph, T starting) {
-    return new HashSet<>();
+    Set<T> reachable = new HashSet<>();
+    Set<T> allNodes = new HashSet<>(graph.keySet());
+
+    dfsUnreachable(graph, starting, reachable);
+    allNodes.removeAll(reachable);
+    return allNodes;
+  }
+
+  private static <T> void dfsUnreachable(Map<T, List<T>> graph, T current, Set<T> reachable){
+    if (!graph.containsKey(current) || reachable.contains(current)) return;
+    
+    reachable.add(current);
+    for (T neighbor : graph.get(current)){
+      dfsUnreachable(graph, neighbor, reachable);
+    }
   }
 }
